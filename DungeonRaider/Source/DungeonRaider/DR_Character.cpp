@@ -2,6 +2,8 @@
 
 
 #include "DR_Character.h"
+
+#include "DR_CharacterStats.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -11,6 +13,8 @@
 #include "GameFramework/Controller.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "DR_CharacterStats.h"
+#include "Engine/DataTable.h"
 
 
 // Sets default values
@@ -55,6 +59,7 @@ void ADR_Character::BeginPlay()
 			Subsystem->AddMappingContext(DefaultMappingContext, 0);
 		}
 	}
+	UpdateCharacterStats(1);
 }
 
 void ADR_Character::Move(const struct FInputActionValue& Value)
@@ -86,13 +91,19 @@ void ADR_Character::Look(const FInputActionValue& Value)
 void ADR_Character::SprintStart(const FInputActionValue& Value)
 {
 	GEngine->AddOnScreenDebugMessage(2, 5.f, FColor::Blue, TEXT("SprintStart"));
-	GetCharacterMovement()->MaxWalkSpeed = 3000.f;
+	if (GetCharacterStats())
+	{
+		GetCharacterMovement()->MaxWalkSpeed = GetCharacterStats()->SprintSpeed;
+	}
 }
 
 void ADR_Character::SprintEnd(const FInputActionValue& Value)
 {
 	GEngine->AddOnScreenDebugMessage(2, 5.f, FColor::Blue, TEXT("SprintEnd"));
-	GetCharacterMovement()->MaxWalkSpeed = 500.f;
+	if (GetCharacterStats())
+	{
+		GetCharacterMovement()->MaxWalkSpeed = GetCharacterStats()->WalkSpeed;
+	}
 }
 
 void ADR_Character::Interact(const FInputActionValue& Value)
@@ -118,6 +129,21 @@ void ADR_Character::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Started, this, &ADR_Character::Interact);
 		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Started, this, &ADR_Character::SprintStart);
 		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &ADR_Character::SprintEnd);
+	}
+}
+
+void ADR_Character::UpdateCharacterStats(int32 CharacterLevel)
+{
+	if (CharacterDataTable)
+	{
+		TArray<FDR_CharacterStats*> CharacterStatsRows;
+		CharacterDataTable->GetAllRows<FDR_CharacterStats>(TEXT("DR_Character"), CharacterStatsRows);
+		if (CharacterStatsRows.Num() > 0)
+		{
+			const auto NewCharacterLevel = FMath::Clamp(CharacterLevel, 1, CharacterStatsRows.Num());
+			CharacterStats = CharacterStatsRows[NewCharacterLevel - 1];
+			GetCharacterMovement()->MaxWalkSpeed = GetCharacterStats()->WalkSpeed;
+		}
 	}
 }
 

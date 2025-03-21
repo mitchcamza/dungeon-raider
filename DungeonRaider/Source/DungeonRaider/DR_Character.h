@@ -24,7 +24,9 @@ class DUNGEONRAIDER_API ADR_Character : public ACharacter
 	TObjectPtr<UInputAction> SprintAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = true))
 	TObjectPtr<UInputAction> InteractAction;
-	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character Data", meta = (AllowPrivateAccess = true))
+	class UDataTable* CharacterDataTable;
+	struct FDR_CharacterStats* CharacterStats;
 
 public:
 	// Sets default values for this character's properties
@@ -48,4 +50,7 @@ public:
 
 	FORCEINLINE USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	FORCEINLINE UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+
+	void UpdateCharacterStats(int32 CharacterLevel);
+	FORCEINLINE FDR_CharacterStats* GetCharacterStats() const { return CharacterStats; }
 };
