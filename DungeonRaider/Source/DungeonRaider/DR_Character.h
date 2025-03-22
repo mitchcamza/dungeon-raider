@@ -31,17 +31,7 @@ class DUNGEONRAIDER_API ADR_Character : public ACharacter
 public:
 	// Sets default values for this character's properties
 	ADR_Character();
-
-protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-	void Move(const struct FInputActionValue& Value);
-	void Look(const FInputActionValue& Value);
-	void SprintStart(const FInputActionValue& Value);
-	void SprintEnd(const FInputActionValue& Value);
-	void Interact(const FInputActionValue& Value);
-
-public:	
+	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
@@ -53,4 +43,19 @@ public:
 
 	void UpdateCharacterStats(int32 CharacterLevel);
 	FORCEINLINE FDR_CharacterStats* GetCharacterStats() const { return CharacterStats; }
+
+protected:
+	// Called when the game starts or when spawned
+	virtual void BeginPlay() override;
+	void Move(const struct FInputActionValue& Value);
+	void Look(const FInputActionValue& Value);
+	void SprintStart(const FInputActionValue& Value);
+	void SprintEnd(const FInputActionValue& Value);
+	void Interact(const FInputActionValue& Value);
+
+	// Remote Procedure Calls
+	UFUNCTION(Server, Reliable)
+	void Server_SprintStart();
+	UFUNCTION(Server, Reliable)
+	void Server_SprintEnd();
 };
