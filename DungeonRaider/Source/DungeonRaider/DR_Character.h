@@ -27,6 +27,8 @@ class DUNGEONRAIDER_API ADR_Character : public ACharacter
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character Data", meta = (AllowPrivateAccess = true))
 	class UDataTable* CharacterDataTable;
 	struct FDR_CharacterStats* CharacterStats;
+	UPROPERTY()
+	AActor* InteractableActor;
 
 public:
 	// Sets default values for this character's properties
@@ -58,4 +60,6 @@ protected:
 	void Server_SprintStart();
 	UFUNCTION(Server, Reliable)
 	void Server_SprintEnd();
+	UFUNCTION(Server, Reliable)
+	void Server_interact();
 };
