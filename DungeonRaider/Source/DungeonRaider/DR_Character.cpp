@@ -105,6 +105,7 @@ void ADR_Character::SprintEnd(const FInputActionValue& Value)
 void ADR_Character::Interact(const FInputActionValue& Value)
 {
 	GEngine->AddOnScreenDebugMessage(3, 5.f, FColor::Red, TEXT("Interact"));
+	Server_interact();
 }
 
 void ADR_Character::Server_interact_Implementation()
