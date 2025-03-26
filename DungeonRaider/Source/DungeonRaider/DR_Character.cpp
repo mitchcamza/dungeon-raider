@@ -14,7 +14,9 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "DR_CharacterStats.h"
+#include "DR_Interactable.h"
 #include "Engine/DataTable.h"
+#include "Kismet/KismetSystemLibrary.h"
 
 
 // Sets default values
@@ -91,31 +93,81 @@ void ADR_Character::Look(const FInputActionValue& Value)
 void ADR_Character::SprintStart(const FInputActionValue& Value)
 {
 	GEngine->AddOnScreenDebugMessage(2, 5.f, FColor::Blue, TEXT("SprintStart"));
+	Server_SprintStart();
+}
+
+void ADR_Character::SprintEnd(const FInputActionValue& Value)
+{
+	GEngine->AddOnScreenDebugMessage(2, 5.f, FColor::Blue, TEXT("SprintEnd"));
+	Server_SprintEnd();
+}
+
+void ADR_Character::Interact(const FInputActionValue& Value)
+{
+	GEngine->AddOnScreenDebugMessage(3, 5.f, FColor::Red, TEXT("Interact"));
+	Server_interact();
+}
+
+void ADR_Character::Server_interact_Implementation()
+{
+	if (InteractableActor)
+	{
+		IDR_Interactable::Execute_Interact(InteractableActor, this);
+	}
+}
+
+void ADR_Character::Server_SprintStart_Implementation()
+{
 	if (GetCharacterStats())
 	{
 		GetCharacterMovement()->MaxWalkSpeed = GetCharacterStats()->SprintSpeed;
 	}
 }
 
-void ADR_Character::SprintEnd(const FInputActionValue& Value)
+void ADR_Character::Server_SprintEnd_Implementation()
 {
-	GEngine->AddOnScreenDebugMessage(2, 5.f, FColor::Blue, TEXT("SprintEnd"));
 	if (GetCharacterStats())
 	{
 		GetCharacterMovement()->MaxWalkSpeed = GetCharacterStats()->WalkSpeed;
 	}
 }
 
-void ADR_Character::Interact(const FInputActionValue& Value)
-{
-	GEngine->AddOnScreenDebugMessage(3, 5.f, FColor::Red, TEXT("Interact"));
-}
-
 // Called every frame
 void ADR_Character::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
+	if (GetLocalRole() != ROLE_Authority)
+	{
+		return;
+	}
+	FHitResult HitResult;
+	FCollisionQueryParams QueryParams;
+	QueryParams.bTraceComplex = true;
+	QueryParams.AddIgnoredActor(this);
+	auto SphereRadius = 50.f;
+	auto StartLocation = GetActorLocation() + GetActorForwardVector() * 150.f;
+	auto EndLocation = StartLocation + GetActorForwardVector() * 500.f;
+	auto bIsHit = UKismetSystemLibrary::SphereTraceSingle(
+		GetWorld(),
+		StartLocation,
+		EndLocation,
+		SphereRadius,
+		UEngineTypes::ConvertToTraceType(ECC_WorldStatic),
+		false,
+		TArray<AActor*>(),
+		EDrawDebugTrace::ForOneFrame,
+		HitResult,
+		true
+	);
+	if (bIsHit && HitResult.GetActor()->GetClass()->ImplementsInterface(UDR_Interactable::StaticClass()))
+	{
+		DrawDebugSphere(GetWorld(), HitResult.ImpactPoint, SphereRadius, 12, FColor::Magenta, false, 1.f);
+		InteractableActor = HitResult.GetActor();
+	}
+	else
+	{
+		InteractableActor = nullptr;
+	}
 }
 
 // Called to bind functionality to input
@@ -136,6 +188,13 @@ void ADR_Character::UpdateCharacterStats(int32 CharacterLevel)
 {
 	if (CharacterDataTable)
 	{
+		// Check if the character is sprinting before levelling up & adjusting speed
+		bool bIsSprinting = false;
+		if (GetCharacterStats())
+		{
+			bIsSprinting = GetCharacterMovement()->MaxWalkSpeed >= GetCharacterStats()->SprintSpeed;
+		}
+		
 		TArray<FDR_CharacterStats*> CharacterStatsRows;
 		CharacterDataTable->GetAllRows<FDR_CharacterStats>(TEXT("DR_Character"), CharacterStatsRows);
 		if (CharacterStatsRows.Num() > 0)
@@ -143,6 +202,10 @@ void ADR_Character::UpdateCharacterStats(int32 CharacterLevel)
 			const auto NewCharacterLevel = FMath::Clamp(CharacterLevel, 1, CharacterStatsRows.Num());
 			CharacterStats = CharacterStatsRows[NewCharacterLevel - 1];
 			GetCharacterMovement()->MaxWalkSpeed = GetCharacterStats()->WalkSpeed;
+			if (bIsSprinting)
+			{
+				Server_SprintStart();
+			}
 		}
 	}
 }
