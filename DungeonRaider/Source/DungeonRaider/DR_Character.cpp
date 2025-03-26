@@ -14,7 +14,9 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "DR_CharacterStats.h"
+#include "DR_Interactable.h"
 #include "Engine/DataTable.h"
+#include "Kismet/KismetSystemLibrary.h"
 
 
 // Sets default values
@@ -103,6 +105,15 @@ void ADR_Character::SprintEnd(const FInputActionValue& Value)
 void ADR_Character::Interact(const FInputActionValue& Value)
 {
 	GEngine->AddOnScreenDebugMessage(3, 5.f, FColor::Red, TEXT("Interact"));
+	Server_interact();
+}
+
+void ADR_Character::Server_interact_Implementation()
+{
+	if (InteractableActor)
+	{
+		IDR_Interactable::Execute_Interact(InteractableActor, this);
+	}
 }
 
 void ADR_Character::Server_SprintStart_Implementation()
@@ -125,6 +136,38 @@ void ADR_Character::Server_SprintEnd_Implementation()
 void ADR_Character::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	if (GetLocalRole() != ROLE_Authority)
+	{
+		return;
+	}
+	FHitResult HitResult;
+	FCollisionQueryParams QueryParams;
+	QueryParams.bTraceComplex = true;
+	QueryParams.AddIgnoredActor(this);
+	auto SphereRadius = 50.f;
+	auto StartLocation = GetActorLocation() + GetActorForwardVector() * 150.f;
+	auto EndLocation = StartLocation + GetActorForwardVector() * 500.f;
+	auto bIsHit = UKismetSystemLibrary::SphereTraceSingle(
+		GetWorld(),
+		StartLocation,
+		EndLocation,
+		SphereRadius,
+		UEngineTypes::ConvertToTraceType(ECC_WorldStatic),
+		false,
+		TArray<AActor*>(),
+		EDrawDebugTrace::ForOneFrame,
+		HitResult,
+		true
+	);
+	if (bIsHit && HitResult.GetActor()->GetClass()->ImplementsInterface(UDR_Interactable::StaticClass()))
+	{
+		DrawDebugSphere(GetWorld(), HitResult.ImpactPoint, SphereRadius, 12, FColor::Magenta, false, 1.f);
+		InteractableActor = HitResult.GetActor();
+	}
+	else
+	{
+		InteractableActor = nullptr;
+	}
 }
 
 // Called to bind functionality to input
