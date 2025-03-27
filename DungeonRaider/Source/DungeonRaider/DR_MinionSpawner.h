@@ -34,11 +34,15 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Spawn System")
 	float SpawnDelay = 10.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Spawn System")
-	int32 NumMinionsAtStart = 5;
+	int32 NumMinionsAtStart = 1;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Spawn System")
+	int32 MaxMinionsToBeSpawned = 4;
 
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Spawn System", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UBoxComponent> SpawnArea;
 	UPROPERTY()
 	FTimerHandle SpawnTimerHandle;
+
+	int32 CurrentMinionCount;
 };

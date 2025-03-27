@@ -8,6 +8,7 @@
 
 // Sets default values
 ADR_MinionSpawner::ADR_MinionSpawner()
+	: CurrentMinionCount(0)
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -35,7 +36,7 @@ void ADR_MinionSpawner::BeginPlay()
 	}
 
 	// Spawn initial enemies
-	for (int32 i = 0; i < NumMinionsAtStart; i++)
+	for (int32 i = 0; i < NumMinionsAtStart && CurrentMinionCount < MaxMinionsToBeSpawned; i++)
 	{
 		Spawn();
 	}
@@ -51,6 +52,10 @@ void ADR_MinionSpawner::BeginPlay()
 
 void ADR_MinionSpawner::Spawn()
 {
+	if (CurrentMinionCount >= MaxMinionsToBeSpawned)
+	{
+		return;
+	}
 	FActorSpawnParameters SpawnParameters;
 	SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
 	auto Minion = SpawnableMinions[FMath::RandRange(0, SpawnableMinions.Num() - 1)];
@@ -61,6 +66,7 @@ void ADR_MinionSpawner::Spawn()
 		0.0f
 	);
 	GetWorld()->SpawnActor<ADR_Minion>(Minion, Location, Rotation, SpawnParameters);
+	CurrentMinionCount++;
 }
 
 // Called every frame
