@@ -54,6 +54,13 @@ void ADR_Minion::BeginPlay()
 	SetNextPatrolLocation();
 }
 
+void ADR_Minion::OnHearNoise(APawn* PawnInstigator, const FVector& Location, float Volume)
+{
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, TEXT("Noise detected!"));
+	GoToLocation(Location);
+	UAIBlueprintHelperLibrary::SimpleMoveToLocation(GetController(), PatrolLocation);
+}
+
 // Called every frame
 void ADR_Minion::Tick(float DeltaTime)
 {
@@ -132,6 +139,7 @@ void ADR_Minion::PostInitializeComponents()
 	}
 	OnActorBeginOverlap.AddDynamic(this, &ADR_Minion::OnBeginOverlap);
 	GetPawnSense()->OnSeePawn.AddDynamic(this, &ADR_Minion::OnPawnDetected);
+	GetPawnSense()->OnHearNoise.AddDynamic(this, &ADR_Minion::OnHearNoise);
 }
 
 void ADR_Minion::OnPawnDetected(APawn* Pawn)
@@ -154,5 +162,11 @@ void ADR_Minion::OnBeginOverlap(AActor* OverlappedActor, AActor* OtherActor)
 		return;
 	}
 	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, TEXT("Character captured!"));
+}
+
+void ADR_Minion::GoToLocation(const FVector& Location)
+{
+	PatrolLocation = Location;
+	UAIBlueprintHelperLibrary::SimpleMoveToLocation(GetController(), PatrolLocation);
 }
 
