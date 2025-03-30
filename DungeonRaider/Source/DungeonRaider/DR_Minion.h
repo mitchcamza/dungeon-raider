@@ -37,7 +37,7 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Minion AI")
 	float ChaseSpeed = 350.0f;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Minion AI")
-	float PatrolRadius = 50000.0f;
+	float PatrolRadius = 1000000.0f;
 
 	UFUNCTION(BlueprintCallable, Category = "Minion AI")
 	void SetNextPatrolLocation();
@@ -63,4 +63,7 @@ private:
 	FVector PatrolLocation;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Minion AI", meta = (AllowPrivateAccess = "true"))
 	float AlertRadius = 10000.0f;
+	float IdleTime = 1.0f;
+	UPROPERTY()
+	FTimerHandle IdleTimerHandle;
 };

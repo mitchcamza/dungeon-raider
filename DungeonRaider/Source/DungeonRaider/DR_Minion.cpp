@@ -25,7 +25,7 @@ ADR_Minion::ADR_Minion()
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 	AIControllerClass = AAIController::StaticClass();
 	PawnSense = CreateDefaultSubobject<UPawnSensingComponent>(TEXT("PawnSense"));
-	PawnSense->SensingInterval = 0.3f;
+	PawnSense->SensingInterval = 1.0f;
 	PawnSense->SetPeripheralVisionAngle(45.f);
 	PawnSense->SightRadius = 5000.f;
 	PawnSense->HearingThreshold = 500.f;
@@ -52,7 +52,16 @@ ADR_Minion::ADR_Minion()
 void ADR_Minion::BeginPlay()
 {
 	Super::BeginPlay();
-	SetNextPatrolLocation();
+	
+	// Set initial patrol location and then go to next patrol location if idle
+	GetWorldTimerManager().SetTimer(
+	IdleTimerHandle,
+	this,
+	&ADR_Minion::SetNextPatrolLocation,
+	IdleTime,
+	true,
+	IdleTime
+);
 }
 
 void ADR_Minion::OnHearNoise(APawn* PawnInstigator, const FVector& Location, float Volume)
@@ -124,8 +133,8 @@ void ADR_Minion::Chase(APawn* Pawn)
 		25.f,
 		12,
 		FColor::Red,
-		true,
-		10.f,
+		false,
+		2.f,
 		0,
 		2.f
 	);
