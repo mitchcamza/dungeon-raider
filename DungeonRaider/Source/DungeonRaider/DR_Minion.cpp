@@ -10,6 +10,7 @@
 #include "Perception/PawnSensingComponent.h"
 #include "Blueprint/AIBlueprintHelperLibrary.h"
 #include "Components/SphereComponent.h"
+#include "DR_GameMode.h"
 
 
 // Sets default values
@@ -24,11 +25,11 @@ ADR_Minion::ADR_Minion()
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 	AIControllerClass = AAIController::StaticClass();
 	PawnSense = CreateDefaultSubobject<UPawnSensingComponent>(TEXT("PawnSense"));
-	PawnSense->SensingInterval = 0.8f;
+	PawnSense->SensingInterval = 0.3f;
 	PawnSense->SetPeripheralVisionAngle(45.f);
-	PawnSense->SightRadius = 1500.f;
-	PawnSense->HearingThreshold = 400.f;
-	PawnSense->LOSHearingThreshold = 800.f;
+	PawnSense->SightRadius = 5000.f;
+	PawnSense->HearingThreshold = 500.f;
+	PawnSense->LOSHearingThreshold = 1000.f;
 	Collision = CreateDefaultSubobject<USphereComponent>(TEXT("Collision"));
 	Collision->SetSphereRadius(100);
 	Collision->SetupAttachment(RootComponent);
@@ -152,6 +153,12 @@ void ADR_Minion::OnPawnDetected(APawn* Pawn)
 	if (GetCharacterMovement()->MaxWalkSpeed != ChaseSpeed)
 	{
 		Chase(Pawn);
+	}
+
+	// Retrieve the game mode and send alert to nearby minions
+	if (const auto GameMode = Cast<ADR_GameMode>(GetWorld()->GetAuthGameMode()))
+	{
+		GameMode->AlertMinions(this, Pawn->GetActorLocation(), AlertRadius);
 	}
 }
 

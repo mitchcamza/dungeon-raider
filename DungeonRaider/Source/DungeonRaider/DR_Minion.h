@@ -61,4 +61,6 @@ private:
 	TObjectPtr<USphereComponent> Collision;
 	UPROPERTY()
 	FVector PatrolLocation;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Minion AI", meta = (AllowPrivateAccess = "true"))
+	float AlertRadius = 10000.0f;
 };
