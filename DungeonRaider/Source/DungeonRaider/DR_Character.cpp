@@ -2,21 +2,19 @@
 
 
 #include "DR_Character.h"
-
 #include "DR_CharacterStats.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "GameFramework/InputSettings.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Components/InputComponent.h"
 #include "GameFramework/Controller.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
-#include "DR_CharacterStats.h"
 #include "DR_Interactable.h"
 #include "Engine/DataTable.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "Components/PawnNoiseEmitterComponent.h"
 
 
 // Sets default values
@@ -31,6 +29,8 @@ ADR_Character::ADR_Character()
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	FollowCamera->bUsePawnControlRotation = false;
+	NoiseEmitter = CreateDefaultSubobject<UPawnNoiseEmitterComponent>(TEXT("NoiseEmitter"));
+	NoiseEmitter->NoiseLifetime = 0.01f;
 
 	// Default component properties
 	bUseControllerRotationPitch = false;
@@ -167,6 +167,17 @@ void ADR_Character::Tick(float DeltaTime)
 	else
 	{
 		InteractableActor = nullptr;
+	}
+
+	// Calculate noise emitted when sprinting
+	if (GetCharacterMovement()->MaxWalkSpeed == GetCharacterStats()->SprintSpeed)
+	{
+		float Noise = 1.f;
+		if (GetCharacterStats() && GetCharacterStats()->StealthMultiplier)
+		{
+			Noise /= GetCharacterStats()->StealthMultiplier;
+		}
+		NoiseEmitter->MakeNoise(this, Noise, GetActorLocation());
 	}
 }
 

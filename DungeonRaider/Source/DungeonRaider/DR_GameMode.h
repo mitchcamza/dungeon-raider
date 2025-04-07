@@ -16,4 +16,7 @@ class DUNGEONRAIDER_API ADR_GameMode : public AGameMode
 
 public:
 	ADR_GameMode();
+
+	UFUNCTION(BlueprintCallable, Category = "Minions")
+	void AlertMinions(AActor* AlertInstigator, const FVector& Location, float Radius);
 };
