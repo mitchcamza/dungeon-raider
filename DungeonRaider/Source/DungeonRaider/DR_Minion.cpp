@@ -11,6 +11,7 @@
 #include "Blueprint/AIBlueprintHelperLibrary.h"
 #include "Components/SphereComponent.h"
 #include "DR_GameMode.h"
+#include "DR_BasePickup.h"
 
 
 // Sets default values
@@ -46,6 +47,13 @@ ADR_Minion::ADR_Minion()
 	GetCharacterMovement()->MaxWalkSpeed = 200.f;
 	GetCharacterMovement()->MinAnalogWalkSpeed = 20.f;
 	GetCharacterMovement()->BrakingDecelerationWalking = 2000.f;
+
+	// Spawn pickup when enemy is defeated
+	static ConstructorHelpers::FClassFinder<ADR_BasePickup> SpawnedPickupAsset(TEXT("/Game/Blueprints/BP_GoldCoinPickup"));
+	if (SpawnedPickupAsset.Succeeded())
+	{
+		SpawnedPickup = SpawnedPickupAsset.Class;
+	}
 }
 
 // Called when the game starts or when spawned
@@ -69,6 +77,21 @@ void ADR_Minion::OnHearNoise(APawn* PawnInstigator, const FVector& Location, flo
 	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, TEXT("Noise detected!"));
 	GoToLocation(Location);
 	UAIBlueprintHelperLibrary::SimpleMoveToLocation(GetController(), PatrolLocation);
+}
+
+void ADR_Minion::OnDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* InstigatedBy,
+	AActor* DamageCauser)
+{
+	Health -= Damage;
+	if (Health > 0)
+	{
+		return;
+	}
+	if (SpawnedPickup)
+	{
+		GetWorld()->SpawnActor<ADR_BasePickup>(SpawnedPickup, GetActorLocation(), GetActorRotation());
+	}
+	Destroy();
 }
 
 // Called every frame
@@ -150,6 +173,7 @@ void ADR_Minion::PostInitializeComponents()
 	OnActorBeginOverlap.AddDynamic(this, &ADR_Minion::OnBeginOverlap);
 	GetPawnSense()->OnSeePawn.AddDynamic(this, &ADR_Minion::OnPawnDetected);
 	GetPawnSense()->OnHearNoise.AddDynamic(this, &ADR_Minion::OnHearNoise);
+	OnTakeAnyDamage.AddDynamic(this, &ADR_Minion::OnDamage);
 }
 
 void ADR_Minion::OnPawnDetected(APawn* Pawn)

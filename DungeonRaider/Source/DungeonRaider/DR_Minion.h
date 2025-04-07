@@ -8,6 +8,7 @@
 
 class UPawnSensingComponent;
 class USphereComponent;
+class ADR_BasePickup;
 
 UCLASS()
 class DUNGEONRAIDER_API ADR_Minion : public ACharacter
@@ -24,6 +25,9 @@ protected:
 
 	UFUNCTION()
 	void OnHearNoise(APawn* PawnInstigator, const FVector& Location, float Volume);
+
+	UFUNCTION()
+	void OnDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* InstigatedBy, AActor* DamageCauser);
 	
 public:	
 	// Called every frame
@@ -66,4 +70,8 @@ private:
 	float IdleTime = 1.0f;
 	UPROPERTY()
 	FTimerHandle IdleTimerHandle;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Health", meta = (AllowPrivateAccess = "true"))
+	float Health = 5.f;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Pickup", meta = (AllowPrivateAccess = "true"))
+	TSubclassOf<ADR_BasePickup> SpawnedPickup;
 };
